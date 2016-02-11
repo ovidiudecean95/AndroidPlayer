@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <ImageView
+        android:id="@+id/song_image_view"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:scaleType="centerCrop"
+        android:src="@drawable/no_image_black"/>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignBottom="@+id/song_image_view"
+        android:background="@drawable/gradient_overlay_music_player"/>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/text_overlay"
+        android:padding="10dp">
+
+        <TextView
+            android:id="@+id/title_text_view"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:lines="1"
+            android:textColor="@android:color/white"
+            tools:text="This is a very good song"/>
+
+    </FrameLayout>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/playback_seekbar"
+        android:layout_centerHorizontal="true">
+
+        <ToggleButton
+            android:id="@+id/play_pause_player_button"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:layout_centerInParent="true"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:layout_marginBottom="5dp"
+            android:textOff=""
+            android:textOn=""
+            android:background="@drawable/play_pause_player_selector"/>
+
+        <Button
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:background="@drawable/next"
+            android:layout_centerVertical="true"
+            android:layout_toRightOf="@id/play_pause_player_button"
+            android:layout_toEndOf="@+id/play_pause_player_button"/>
+
+        <Button
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:background="@drawable/previous"
+            android:layout_centerVertical="true"
+            android:layout_toLeftOf="@id/play_pause_player_button"
+            android:layout_toStartOf="@+id/play_pause_player_button"/>
+
+        <TextView
+            android:id="@+id/time_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBottom="@+id/play_pause_player_button"
+            android:layout_toRightOf="@+id/play_pause_player_button"
+            android:layout_toEndOf="@+id/play_pause_player_button"
+            android:textColor="@color/colorPrimary"
+            tools:text="2:34/3:54"/>
+
+    </RelativeLayout>
+
+    <android.support.v7.widget.AppCompatSeekBar
+        android:id="@+id/playback_seekbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:maxHeight="3dp"
+        android:layout_alignBottom="@+id/song_image_view"
+        android:progressDrawable="@drawable/progress"
+        android:thumb="@drawable/thumb"
+        android:layout_marginBottom="5dp"/>
+
+</RelativeLayout>
