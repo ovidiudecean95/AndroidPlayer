@@ -79,10 +79,11 @@ public class MainActivity extends AppCompatActivity
 
         songRepository = new SongRepository(getContentResolver());
 
+        playerFragment = PlayerFragment.newInstance();
+        playerFragment.setSongRepository(songRepository);
+
         Intent intent = new Intent(this, MediaPlayerService.class);
         bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
-
-        playerFragment = PlayerFragment.newInstance();
 
         if (savedInstanceState != null) {
             tracksFragment = (TracksFragment) getSupportFragmentManager().findFragmentById(R.id.fragment_container);
@@ -123,7 +124,12 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onPauseMediaPlayer() {
         mMediaPlayerService.pause();
-        removePlayerFragment();
+//        removePlayerFragment();
+    }
+
+    @Override
+    public void onSeekChanged(int progress) {
+        mMediaPlayerService.setProgress(progress);
     }
 
     private void removePlayerFragment() {

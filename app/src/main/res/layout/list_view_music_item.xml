@@ -4,47 +4,60 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="64dp"
-    android:paddingLeft="@dimen/activity_vertical_margin"
-    android:paddingRight="@dimen/activity_vertical_margin"
     android:background="@color/colorBackground">
 
-    <ImageView
-        android:id="@+id/music_image_view"
-        android:layout_centerVertical="true"
-        android:layout_width="@dimen/image_music_dimen"
-        android:layout_height="@dimen/image_music_dimen"
-        android:src="@drawable/no_image"/>
-
-    <TextView
-        android:id="@+id/music_title_text_view"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_toRightOf="@+id/music_image_view"
-        android:layout_toEndOf="@+id/music_image_view"
-        android:layout_toLeftOf="@+id/play_pause_button"
-        android:layout_toStartOf="@+id/play_pause_button"
-        android:textColor="@android:color/white"
-        android:layout_centerVertical="true"
-        android:layout_marginLeft="@dimen/activity_vertical_margin"
-        android:layout_marginStart="@dimen/activity_vertical_margin"
-        android:lines="1"
-        tools:text="Best Music"/>
-
-    <ToggleButton
-        android:id="@+id/play_pause_button"
-        android:layout_width="32dp"
-        android:layout_height="32dp"
-        android:textOff=""
-        android:textOn=""
-        android:background="@drawable/play_pause_selector"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentRight="true"
-        android:layout_centerVertical="true"/>
-
     <FrameLayout
+        android:id="@+id/progress_frame_layout"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:background="@color/progress_list_view"
+        android:visibility="invisible"/>
+
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="@color/colorDivider"
-        android:layout_alignParentBottom="true"/>
+        android:layout_height="match_parent"
+        android:paddingLeft="@dimen/activity_vertical_margin"
+        android:paddingRight="@dimen/activity_vertical_margin">
+
+        <ImageView
+            android:id="@+id/music_image_view"
+            android:layout_centerVertical="true"
+            android:layout_width="@dimen/image_music_dimen"
+            android:layout_height="@dimen/image_music_dimen"
+            android:src="@drawable/no_image"/>
+
+        <TextView
+            android:id="@+id/music_title_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toRightOf="@+id/music_image_view"
+            android:layout_toEndOf="@+id/music_image_view"
+            android:layout_toLeftOf="@+id/play_pause_button"
+            android:layout_toStartOf="@+id/play_pause_button"
+            android:textColor="@android:color/white"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="@dimen/activity_vertical_margin"
+            android:layout_marginStart="@dimen/activity_vertical_margin"
+            android:lines="1"
+            tools:text="Best Music"/>
+
+        <ToggleButton
+            android:id="@+id/play_pause_button"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:textOff=""
+            android:textOn=""
+            android:background="@drawable/play_pause_selector"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"/>
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/colorDivider"
+            android:layout_alignParentBottom="true"/>
+
+    </RelativeLayout>
 
 </RelativeLayout>

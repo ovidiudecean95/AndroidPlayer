@@ -7,6 +7,7 @@
 
     <color name="colorBackground">#263238</color>
     <color name="colorDivider">#757575</color>
+    <color name="progress_list_view">#aa5a5a5a</color>
 
     <color name="black_overlay">#c0000000</color>
 </resources>

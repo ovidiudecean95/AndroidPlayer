@@ -1,19 +1,23 @@
 package eu.principalmedia.androidplayer.fragment;
 
 import android.app.Activity;
+import android.graphics.Bitmap;
+import android.graphics.Point;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CompoundButton;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.ToggleButton;
 
@@ -45,8 +49,12 @@ public class TracksFragment extends Fragment implements MediaPlayerService.Media
 
     OnTrackListener trackListener;
 
+    public static final int INDEFINITE = -1;
+
     private Song mSong;
     private boolean isPlaying = false;
+    private int screenWidth = INDEFINITE;
+    private int progress = INDEFINITE;
 
     public static TracksFragment newInstance(SongRepository songRepository) {
         TracksFragment tracksFragment = new TracksFragment();
@@ -109,11 +117,34 @@ public class TracksFragment extends Fragment implements MediaPlayerService.Media
 
     @Override
     public void onTimeChanged(int current, int max) {
+        final FrameLayout progressFrameLayout = ((MusicAdapter) mAdapter).getProgress();
 
+        if (progressFrameLayout != null) {
+            if (screenWidth == INDEFINITE) {
+                Display display = getActivity().getWindowManager().getDefaultDisplay();
+                Point size = new Point();
+                display.getSize(size);
+                screenWidth = size.x;
+            }
+
+            int progress = (int) ((float) current / max * screenWidth);
+            this.progress = progress;
+            final RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(
+                    progress, ViewGroup.LayoutParams.MATCH_PARENT);
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    progressFrameLayout.setLayoutParams(layoutParams);
+                }
+            });
+        }
     }
 
     @Override
     public void onPlay(Song lastSong, Song currentSong) {
+        if (currentSong != mSong) {
+            progress = INDEFINITE;
+        }
         isPlaying = true;
         mSong = currentSong;
         mAdapter.notifyDataSetChanged();
@@ -126,7 +157,7 @@ public class TracksFragment extends Fragment implements MediaPlayerService.Media
     }
 
     public interface OnItemClickListener {
-        void onItemClick(int position);
+        void onItemClick(int position, boolean play);
         void onPlayPauseClick(int position,  boolean play);
     }
 
@@ -134,12 +165,19 @@ public class TracksFragment extends Fragment implements MediaPlayerService.Media
 
 //        private ToggleButton lastToggledButton;
 
+        FrameLayout frameLayout;
+
+        public FrameLayout getProgress() {
+            return frameLayout;
+        }
+
         public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener, CompoundButton.OnCheckedChangeListener{
 
             public TextView musicTextView;
             public ImageView musicImageView;
             public ToggleButton playPauseToggleButton;
             private OnItemClickListener onItemClickListener;
+            private FrameLayout progressFrameLayout;
 
             public ViewHolder(View itemView, OnItemClickListener onItemClickListener) {
                 super(itemView);
@@ -147,6 +185,7 @@ public class TracksFragment extends Fragment implements MediaPlayerService.Media
                 musicTextView = (TextView) itemView.findViewById(R.id.music_title_text_view);
                 musicImageView = (ImageView) itemView.findViewById(R.id.music_image_view);
                 playPauseToggleButton = (ToggleButton) itemView.findViewById(R.id.play_pause_button);
+                progressFrameLayout = (FrameLayout) itemView.findViewById(R.id.progress_frame_layout);
 
                 this.onItemClickListener = onItemClickListener;
                 itemView.setOnClickListener(this);
@@ -155,7 +194,8 @@ public class TracksFragment extends Fragment implements MediaPlayerService.Media
 
             @Override
             public void onClick(View v) {
-                onItemClickListener.onItemClick(getPosition());
+                boolean play = !playPauseToggleButton.isChecked();
+                onItemClickListener.onItemClick(getPosition(), play);
             }
 
             @Override
@@ -178,8 +218,17 @@ public class TracksFragment extends Fragment implements MediaPlayerService.Media
 
             return new ViewHolder(view, new OnItemClickListener() {
                 @Override
-                public void onItemClick(int position) {
-                    Snackbar.make(view, position + " ", Snackbar.LENGTH_SHORT).show();
+                public void onItemClick(int position, boolean play) {
+//                    Snackbar.make(view, position + " ", Snackbar.LENGTH_SHORT).show();
+                    if (play) {
+                        trackListener.onPlayMediaPlayer(mSongList.get(position));
+                        trackListener.onAddPlayerFragment();
+//                        if (!sameButton) {
+//                            lastToggledButton.setChecked(false);
+//                        }
+                    } else {
+                        trackListener.onPauseMediaPlayer();
+                    }
                 }
 
                 @Override
@@ -203,11 +252,30 @@ public class TracksFragment extends Fragment implements MediaPlayerService.Media
         @Override
         public void onBindViewHolder(MusicAdapter.ViewHolder holder, int position) {
             Log.e("POS", position + "");
-            holder.musicTextView.setText(mSongList.get(position).getTitle());
+            holder.musicTextView.setText(mSongList.get(position).getDisplayName());
             if (isPlaying && mSong != null && mSong == mSongList.get(position)) {
                 holder.playPauseToggleButton.setChecked(true);
             } else {
                 holder.playPauseToggleButton.setChecked(false);
+            }
+
+            if (mSong != null && mSongList.get(position) == mSong) {
+                if (progress != INDEFINITE) {
+                    holder.progressFrameLayout.setLayoutParams(new RelativeLayout.LayoutParams(
+                        progress, ViewGroup.LayoutParams.MATCH_PARENT));
+                }
+                holder.progressFrameLayout.setVisibility(View.VISIBLE);
+                frameLayout = holder.progressFrameLayout;
+
+            } else {
+                holder.progressFrameLayout.setVisibility(View.INVISIBLE);
+            }
+
+            Bitmap albumBitmap = songRepository.getAlbumBitmap(Integer.valueOf(mSongList.get(position).getAlbumId()));
+            if (albumBitmap != null) {
+                holder.musicImageView.setImageBitmap(albumBitmap);
+            } else {
+                holder.musicImageView.setImageResource(R.drawable.no_image);
             }
         }
 

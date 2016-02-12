@@ -39,8 +39,8 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnPrepare
     private final IBinder mBinder = new MediaPlayerBinder();
     private List<MediaPlayerListener> mediaPlayerListeners = new ArrayList<>();
 
-    MediaPlayer mMediaPlayer;
-    Song mSong;
+    private MediaPlayer mMediaPlayer;
+    private Song mSong;
 
     public void play(Song song) throws IOException {
         if (mMediaPlayer == null) {
@@ -74,6 +74,14 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnPrepare
         this.mSong = song;
     }
 
+    public void setProgress(int progress) {
+        stopTimeListener();
+        mMediaPlayer.pause();
+        mMediaPlayer.seekTo(progress);
+        mMediaPlayer.start();
+        startTimeListener();
+    }
+
     public void pause() {
         if (mMediaPlayer != null) {
             stopTimeListener();
@@ -90,6 +98,14 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnPrepare
                 Log.e(TAG, "PAUSE NULL");
             }
         }
+    }
+
+    public Song getSong() {
+        return mSong;
+    }
+
+    public boolean isPlaying() {
+        return mMediaPlayer.isPlaying();
     }
 
     public void reset() {
@@ -174,8 +190,8 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnPrepare
                         }
                     }
                 },
-                200, //initialDelay
-                200, //delay
+                0, //initialDelay
+                500, //delay
                 TimeUnit.MILLISECONDS);
     }
 

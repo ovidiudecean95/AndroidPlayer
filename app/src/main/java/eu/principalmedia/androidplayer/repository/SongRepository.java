@@ -1,14 +1,18 @@
 package eu.principalmedia.androidplayer.repository;
 
 import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.provider.MediaStore;
 import android.util.Log;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import eu.principalmedia.androidplayer.entities.Song;
 
@@ -16,6 +20,8 @@ import eu.principalmedia.androidplayer.entities.Song;
  * Created by Ovidiu on 2/5/2016.
  */
 public class SongRepository /*implements Serializable*/{
+
+    Map<Integer, Bitmap> albumsBitmaps = new HashMap<>();
 
     public interface OnResultListener {
         void onResult(List<Song> songList);
@@ -59,7 +65,9 @@ public class SongRepository /*implements Serializable*/{
             Uri mediaUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
             String selection = MediaStore.Audio.Media.IS_MUSIC + "!= 0";
             String order = MediaStore.Audio.Media.TITLE + " ASC";
-            Cursor cursor = contentResolver.query(mediaUri, null, selection, null, order);
+            String[] projections = {MediaStore.Audio.Media.TITLE, MediaStore.Audio.Media.DATA,
+                        MediaStore.Audio.Media.DISPLAY_NAME, MediaStore.Audio.Media.ALBUM_ID};
+            Cursor cursor = contentResolver.query(mediaUri, projections, selection, null, order);
 
             if (cursor == null) {
                 // query failed, handle error.
@@ -73,6 +81,7 @@ public class SongRepository /*implements Serializable*/{
                     String title = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.TITLE));
                     String path  = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DATA));
                     String displayName = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DISPLAY_NAME));
+                    String albumId = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID));
 //                    if (cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media._ID)).equals("367")) {
 //                        for (int i = 0; i < cursor.getColumnCount(); ++i) {
 //                            Log.e("INDEX", cursor.getColumnName(i) + ":  " + cursor.getString(i));
@@ -82,13 +91,35 @@ public class SongRepository /*implements Serializable*/{
                     song.setTitle(title);
                     song.setPath(path);
                     song.setDisplayName(displayName);
+                    song.setAlbumId(albumId);
                     mSongList.add(song);
+
+                    if (!albumsBitmaps.containsKey(Integer.valueOf(albumId))) {
+                        addAlbum(Integer.valueOf(albumId));
+                    }
                 } while (cursor.moveToNext());
 
                 cursor.close();
             }
             return null;
         }
+    }
+
+    private void addAlbum(int albumId) {
+        Uri sArtworkUri = Uri.parse("content://media/external/audio/albumart");
+        Uri albumArtUri = ContentUris.withAppendedId(sArtworkUri, albumId);
+
+        try {
+            Bitmap bitmap = MediaStore.Images.Media.getBitmap(
+                    contentResolver, albumArtUri);
+            albumsBitmaps.put(albumId, bitmap);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public Bitmap getAlbumBitmap(int albumId) {
+        return albumsBitmaps.get(albumId);
     }
 
 }
