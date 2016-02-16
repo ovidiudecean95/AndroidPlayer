@@ -9,15 +9,18 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.ToggleButton;
 
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 import eu.principalmedia.androidplayer.R;
+import eu.principalmedia.androidplayer.activity.MainActivity;
 import eu.principalmedia.androidplayer.entities.Song;
 import eu.principalmedia.androidplayer.interfaces.OnTrackListener;
 import eu.principalmedia.androidplayer.repository.SongRepository;
@@ -34,12 +37,14 @@ public class PlayerFragment extends Fragment implements MediaPlayerService.Media
     }
 
     OnTrackListener trackListener;
+    MediaPlayerService mMediaPlayerService;
 
     private PlayerListener playerListener;
     private TextView timeTextView;
     private TextView titleTextView;
     private SeekBar progressSeekBar;
     private ToggleButton playPauseButton;
+    private Button nextSong;
     private ImageView songImageView;
 
     private SongRepository songRepository;
@@ -57,6 +62,13 @@ public class PlayerFragment extends Fragment implements MediaPlayerService.Media
         this.songRepository = songRepository;
     }
 
+    public void setService(MediaPlayerService mediaPlayerService) {
+        Log.e(TAG, "setService");
+        this.mMediaPlayerService = mediaPlayerService;
+        this.mMediaPlayerService.setMediaPlayerListener(this);
+        syncWithService();
+    }
+
     public void setSong(Song song) {
         this.currentSong = song;
     }
@@ -68,6 +80,7 @@ public class PlayerFragment extends Fragment implements MediaPlayerService.Media
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        Log.e(TAG, "onCreateView");
         View view = inflater.inflate(R.layout.fragment_player, container, false);
         timeTextView = (TextView) view.findViewById(R.id.time_text_view);
         progressSeekBar = (SeekBar) view.findViewById(R.id.playback_seekbar);
@@ -75,11 +88,25 @@ public class PlayerFragment extends Fragment implements MediaPlayerService.Media
         playPauseButton = (ToggleButton) view.findViewById(R.id.play_pause_player_button);
         songImageView = (ImageView) view.findViewById(R.id.song_image_view);
 
+        Button nextSongButton = (Button) view.findViewById(R.id.next_button);
+        nextSongButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                try {
+                    mMediaPlayerService.nextSong();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
         progressSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 Log.e(TAG, "PROGRESS " + progress);
-                trackListener.onSeekChanged(progress);
+                if (seekBar.isPressed()) {
+                    trackListener.onSeekChanged(progress);
+                }
             }
 
             @Override
@@ -109,24 +136,6 @@ public class PlayerFragment extends Fragment implements MediaPlayerService.Media
         });
 
         Log.e(TAG, "ischecked " + playPauseButton.isChecked());
-        return view;
-    }
-
-
-
-    @Override
-    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-        Log.e(TAG, "onviewcreated");
-        Log.e(TAG, "Button " + playPauseButton.isChecked());
-        playerListener.onViewCreatedPlayerFragment();
-
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        Log.e(TAG, "Button " + playPauseButton.isChecked());
 
         if (isPlaying) {
             Log.e(TAG, "isPlaying");
@@ -142,26 +151,69 @@ public class PlayerFragment extends Fragment implements MediaPlayerService.Media
                 songImageView.setImageResource(R.drawable.no_image_black);
             }
         }
+
+        return view;
+    }
+
+    private void syncWithService() {
+        currentSong = mMediaPlayerService.getSong();
+        isPlaying = mMediaPlayerService.isPlaying();
+    }
+
+    @Override
+    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        Log.e(TAG, "onviewcreated");
+        Log.e(TAG, "Button " + playPauseButton.isChecked());
+        playerListener.onViewCreatedPlayerFragment();
+
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        Log.e(TAG, "onResume");
+        Log.e(TAG, "Button " + playPauseButton.isChecked());
+
+
+    }
+
+    @Override
+    public void onDetach() {
+        mMediaPlayerService.removeMediaPlayerListener(this);
+        super.onDetach();
     }
 
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
+        Log.e(TAG, "onAttach");
         try {
             playerListener = (PlayerListener) activity;
             trackListener = (OnTrackListener) activity;
+            mMediaPlayerService = ((MainActivity) activity).mMediaPlayerService;
+            if (mMediaPlayerService != null) {
+                mMediaPlayerService.setMediaPlayerListener(this);
+                syncWithService();
+            }
         } catch (ClassCastException e) {
             e.printStackTrace();
         }
     }
 
     @Override
-    public void onDetach() {
-        super.onDetach();
+    public void onDestroy() {
+        super.onDestroy();
     }
 
     @Override
-    public void onTimeChanged(final int current, final int duration) {
+    public boolean onTimeChanged(final int current, final int duration) {
+        Log.e(TAG, TAG);
+
+        if (getActivity() == null) {
+            return false;
+        }
+
         final String currentText = TimeUtils.millisToTimeString(current);
         final String durationText = TimeUtils.millisToTimeString(duration);
         getActivity().runOnUiThread(new Runnable() {
@@ -172,6 +224,8 @@ public class PlayerFragment extends Fragment implements MediaPlayerService.Media
                 progressSeekBar.setProgress(current);
             }
         });
+
+        return true;
     }
 
     @Override

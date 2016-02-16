@@ -1,7 +1,13 @@
 package eu.principalmedia.androidplayer.service;
 
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.TimedText;
@@ -13,18 +19,24 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.PowerManager;
 import android.support.annotation.Nullable;
+import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import eu.principalmedia.androidplayer.NotificationPlayback;
+import eu.principalmedia.androidplayer.R;
+import eu.principalmedia.androidplayer.activity.MainActivity;
 import eu.principalmedia.androidplayer.entities.Song;
+import eu.principalmedia.androidplayer.repository.SongRepository;
 
 /**
  * Created by Ovidiu on 2/3/2016.
@@ -41,8 +53,36 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnPrepare
 
     private MediaPlayer mMediaPlayer;
     private Song mSong;
+    private boolean isPlaying = false;
+    NotificationPlayback notificationBuilder;
+    private SongRepository mSongRepository;
+
+    @Override
+    public void onCreate() {
+        Log.e(TAG, "OnCreate");
+        super.onCreate();
+        notificationBuilder = new NotificationPlayback(this);
+        notificationBuilder.setSmallIcon(R.drawable.no_image);
+        Intent notificationIntent = new Intent(this, MainActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
+        notificationBuilder.setContentIntent(pendingIntent);
+
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(NotificationPlayback.ACTION_CANCEL_NOTIFICATION);
+        filter.addAction(NotificationPlayback.ACTION_PLAY_PAUSE_NOTIFICATION);
+        registerReceiver(notificationReceiver, filter);
+    }
+
+    public void setSongRepository(SongRepository songRepository) {
+        this.mSongRepository = songRepository;
+    }
+
+    public SongRepository getSongRepository() {
+        return mSongRepository;
+    }
 
     public void play(Song song) throws IOException {
+        isPlaying = true;
         if (mMediaPlayer == null) {
             mMediaPlayer = new MediaPlayer();
             mMediaPlayer.setWakeMode(this, PowerManager.PARTIAL_WAKE_LOCK);
@@ -70,8 +110,11 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnPrepare
                 Log.e(TAG, "PLAY NULL");
             }
         }
-
         this.mSong = song;
+    }
+
+    public void nextSong() throws IOException {
+        play(mSongRepository.nextSong(mSong));
     }
 
     public void setProgress(int progress) {
@@ -83,6 +126,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnPrepare
     }
 
     public void pause() {
+        isPlaying = false;
         if (mMediaPlayer != null) {
             stopTimeListener();
             mMediaPlayer.pause();
@@ -105,7 +149,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnPrepare
     }
 
     public boolean isPlaying() {
-        return mMediaPlayer.isPlaying();
+        return isPlaying;
     }
 
     public void reset() {
@@ -132,6 +176,13 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnPrepare
     @Override
     public void onCompletion(MediaPlayer mp) {
         Log.e(TAG, "Complete");
+        stopTimeListener();
+        try {
+            nextSong();
+        } catch (IOException e) {
+            e.printStackTrace();
+            //TODO: handle exception
+        }
     }
 
     @Override
@@ -141,6 +192,8 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnPrepare
 
     @Override
     public void onDestroy() {
+        Log.e(TAG, "OnDestroy");
+        unregisterReceiver(notificationReceiver);
         if (mMediaPlayer != null) {
             mMediaPlayer.release();
         }
@@ -160,11 +213,17 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnPrepare
     }
 
     public void setMediaPlayerListener(MediaPlayerListener listener) {
-        this.mediaPlayerListeners.add(listener);
+        if (!mediaPlayerListeners.contains(listener)) {
+            mediaPlayerListeners.add(listener);
+        }
+    }
+
+    public void removeMediaPlayerListener(MediaPlayerListener listener) {
+        mediaPlayerListeners.remove(listener);
     }
 
     public interface MediaPlayerListener {
-        void onTimeChanged(int current, int max);
+        boolean onTimeChanged(int current, int max);
         void onPlay(Song lastSong, Song currentSong);
         void onPause(Song song);
     }
@@ -180,12 +239,17 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnPrepare
                         int duration = mMediaPlayer.getDuration();
                         int currentPosition = mMediaPlayer.getCurrentPosition();
 //                        Log.e(TAG, duration + " " + currentPosition);
-                        for (MediaPlayerListener mediaPlayerListener : mediaPlayerListeners) {
+                        for (Iterator<MediaPlayerListener> iterator = mediaPlayerListeners.iterator(); iterator.hasNext();) {
+                            MediaPlayerListener mediaPlayerListener = iterator.next();
                             if (mediaPlayerListener != null) {
 //                                Log.e(TAG, "NOT NULL");
-                                mediaPlayerListener.onTimeChanged(currentPosition, duration);
+//                                Log.e(TAG, mediaPlayerListener.onTimeChanged(currentPosition, duration) + "");
+                                if (!mediaPlayerListener.onTimeChanged(currentPosition, duration)) {
+                                    iterator.remove();
+                                }
+
                             } else {
-//                                Log.e(TAG, "NULL");
+                                Log.e(TAG, "NULL");
                             }
                         }
                     }
@@ -200,5 +264,29 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnPrepare
             myScheduledExecutorService.shutdownNow();
         }
     }
+
+    private final BroadcastReceiver notificationReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            switch (action) {
+                case NotificationPlayback.ACTION_CANCEL_NOTIFICATION:
+                    pause();
+                    stopForeground(true);
+                    break;
+                case NotificationPlayback.ACTION_PLAY_PAUSE_NOTIFICATION:
+                    if (isPlaying) {
+                        pause();
+                    } else {
+                        try {
+                            play(mSong);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    break;
+            }
+        }
+    };
 
 }

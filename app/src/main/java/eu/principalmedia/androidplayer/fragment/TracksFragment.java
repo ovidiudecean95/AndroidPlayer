@@ -24,6 +24,8 @@ import android.widget.ToggleButton;
 import java.util.ArrayList;
 import java.util.List;
 
+import de.hdodenhof.circleimageview.CircleImageView;
+import eu.principalmedia.androidplayer.activity.MainActivity;
 import eu.principalmedia.androidplayer.interfaces.OnTrackListener;
 import eu.principalmedia.androidplayer.R;
 import eu.principalmedia.androidplayer.entities.Song;
@@ -48,6 +50,7 @@ public class TracksFragment extends Fragment implements MediaPlayerService.Media
     List<Song> mSongList = new ArrayList<>();
 
     OnTrackListener trackListener;
+    MediaPlayerService mMediaPlayerService;
 
     public static final int INDEFINITE = -1;
 
@@ -56,7 +59,7 @@ public class TracksFragment extends Fragment implements MediaPlayerService.Media
     private int screenWidth = INDEFINITE;
     private int progress = INDEFINITE;
 
-    public static TracksFragment newInstance(SongRepository songRepository) {
+    public static TracksFragment newInstance() {
         TracksFragment tracksFragment = new TracksFragment();
 //        Bundle bundle = new Bundle();
 //        bundle.putSerializable(KEY_REPOSITORY, songRepository);
@@ -99,14 +102,36 @@ public class TracksFragment extends Fragment implements MediaPlayerService.Media
         this.songRepository = songRepository;
     }
 
+    public void setService(MediaPlayerService mediaPlayerService) {
+        this.mMediaPlayerService = mediaPlayerService;
+        this.mMediaPlayerService.setMediaPlayerListener(this);
+        syncWithService();
+    }
+
+    @Override
+    public void onDetach() {
+        mMediaPlayerService.removeMediaPlayerListener(this);
+        super.onDetach();
+    }
+
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
         try {
             trackListener = (OnTrackListener) activity;
+            mMediaPlayerService =  ((MainActivity) activity).mMediaPlayerService;
+            if (mMediaPlayerService != null) {
+                mMediaPlayerService.setMediaPlayerListener(this);
+                syncWithService();
+            }
         } catch (ClassCastException e) {
             e.printStackTrace();
         }
+    }
+
+    private void syncWithService() {
+        mSong = mMediaPlayerService.getSong();
+        isPlaying = mMediaPlayerService.isPlaying();
     }
 
     @Override
@@ -116,7 +141,13 @@ public class TracksFragment extends Fragment implements MediaPlayerService.Media
     }
 
     @Override
-    public void onTimeChanged(int current, int max) {
+    public boolean onTimeChanged(int current, int max) {
+        Log.e(TAG, TAG);
+
+        if (getActivity() == null) {
+            return false;
+        }
+
         final FrameLayout progressFrameLayout = ((MusicAdapter) mAdapter).getProgress();
 
         if (progressFrameLayout != null) {
@@ -138,6 +169,7 @@ public class TracksFragment extends Fragment implements MediaPlayerService.Media
                 }
             });
         }
+        return true;
     }
 
     @Override
@@ -174,7 +206,7 @@ public class TracksFragment extends Fragment implements MediaPlayerService.Media
         public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener, CompoundButton.OnCheckedChangeListener{
 
             public TextView musicTextView;
-            public ImageView musicImageView;
+            public CircleImageView musicImageView;
             public ToggleButton playPauseToggleButton;
             private OnItemClickListener onItemClickListener;
             private FrameLayout progressFrameLayout;
@@ -183,7 +215,7 @@ public class TracksFragment extends Fragment implements MediaPlayerService.Media
                 super(itemView);
 
                 musicTextView = (TextView) itemView.findViewById(R.id.music_title_text_view);
-                musicImageView = (ImageView) itemView.findViewById(R.id.music_image_view);
+                musicImageView = (CircleImageView) itemView.findViewById(R.id.music_image_view);
                 playPauseToggleButton = (ToggleButton) itemView.findViewById(R.id.play_pause_button);
                 progressFrameLayout = (FrameLayout) itemView.findViewById(R.id.progress_frame_layout);
 
@@ -227,7 +259,7 @@ public class TracksFragment extends Fragment implements MediaPlayerService.Media
 //                            lastToggledButton.setChecked(false);
 //                        }
                     } else {
-                        trackListener.onPauseMediaPlayer();
+                        trackListener.onAddRemovePlayerFragment();
                     }
                 }
 

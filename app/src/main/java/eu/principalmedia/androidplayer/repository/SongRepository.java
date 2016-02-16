@@ -42,6 +42,15 @@ public class SongRepository /*implements Serializable*/{
         }
     }
 
+    public Song nextSong(Song song) {
+        int index = mSongList.indexOf(song);
+        ++index;
+        if (index < mSongList.size()) {
+            return mSongList.get(index);
+        }
+        return mSongList.get(0);
+    }
+
     class FindMusicAsyncTask extends AsyncTask<Void, Void, Void> {
 
         OnResultListener onResultListener;

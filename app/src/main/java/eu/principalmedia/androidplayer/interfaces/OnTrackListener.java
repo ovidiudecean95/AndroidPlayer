@@ -10,4 +10,5 @@ public interface OnTrackListener {
     void onPauseMediaPlayer();
     void onAddPlayerFragment();
     void onSeekChanged(int progress);
+    void onAddRemovePlayerFragment();
 }

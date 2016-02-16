@@ -53,6 +53,7 @@
             android:background="@drawable/play_pause_player_selector"/>
 
         <Button
+            android:id="@+id/next_button"
             android:layout_width="50dp"
             android:layout_height="50dp"
             android:background="@drawable/next"

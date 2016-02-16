@@ -48,7 +48,7 @@ public class MainActivity extends AppCompatActivity
 
     public static final String TAG = MainActivity.class.getSimpleName();
 
-    MediaPlayerService mMediaPlayerService;
+    public MediaPlayerService mMediaPlayerService;
     FrameLayout fragmentContainer;
     FrameLayout fragmentContainerPlayer;
 
@@ -77,29 +77,39 @@ public class MainActivity extends AppCompatActivity
         navigationView.setNavigationItemSelectedListener(this);
         navigationView.getMenu().getItem(0).setChecked(true);
 
-        songRepository = new SongRepository(getContentResolver());
-
-        playerFragment = PlayerFragment.newInstance();
-        playerFragment.setSongRepository(songRepository);
-
         Intent intent = new Intent(this, MediaPlayerService.class);
         bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
 
         if (savedInstanceState != null) {
             tracksFragment = (TracksFragment) getSupportFragmentManager().findFragmentById(R.id.fragment_container);
-            tracksFragment.setRepository(songRepository);
-            return;
         }
 
-        tracksFragment = TracksFragment.newInstance(songRepository);
+    }
+
+    private void addFragments(SongRepository songRepository) {
+        this.songRepository = songRepository;
+
+        playerFragment = PlayerFragment.newInstance();
+        playerFragment.setSongRepository(songRepository);
+
+        tracksFragment = TracksFragment.newInstance();
         tracksFragment.setRepository(songRepository);
 
         getSupportFragmentManager().beginTransaction().add(R.id.fragment_container, tracksFragment).commit();
+        if (mMediaPlayerService.isPlaying()) {
+            getSupportFragmentManager().beginTransaction().add(R.id.fragment_container_player, playerFragment).commit();
+        }
+
+        playerFragment.setService(mMediaPlayerService);
+        tracksFragment.setService(mMediaPlayerService);
     }
 
     @Override
     protected void onDestroy() {
         Log.e(TAG, "onDestroy");
+//        mMediaPlayerService.removeMediaPlayerListener(playerFragment);
+//        mMediaPlayerService.removeMediaPlayerListener(tracksFragment);
+
         unbindService(mConnection);
         super.onDestroy();
     }
@@ -118,6 +128,16 @@ public class MainActivity extends AppCompatActivity
         if (getSupportFragmentManager().findFragmentById(R.id.fragment_container_player) == null) {
             getSupportFragmentManager().beginTransaction()
                     .add(R.id.fragment_container_player, playerFragment).commit();
+        }
+    }
+
+    @Override
+    public void onAddRemovePlayerFragment() {
+        if (getSupportFragmentManager().findFragmentById(R.id.fragment_container_player) == null) {
+            getSupportFragmentManager().beginTransaction()
+                    .add(R.id.fragment_container_player, playerFragment).commit();
+        } else {
+            removePlayerFragment();
         }
     }
 
@@ -162,13 +182,21 @@ public class MainActivity extends AppCompatActivity
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             mMediaPlayerService = ((MediaPlayerService.MediaPlayerBinder) service).getService();
-            mMediaPlayerService.setMediaPlayerListener(playerFragment);
-            mMediaPlayerService.setMediaPlayerListener(tracksFragment);
+
+            if (mMediaPlayerService.getSongRepository() != null) {
+                addFragments(mMediaPlayerService.getSongRepository());
+            } else {
+                addFragments(new SongRepository(getContentResolver()));
+                mMediaPlayerService.setSongRepository(songRepository);
+            }
+
+//            mMediaPlayerService.setMediaPlayerListener(playerFragment);
+//            mMediaPlayerService.setMediaPlayerListener(tracksFragment);
         }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
-
+            Log.e(TAG, "Service Disconnected");
         }
     };
 
@@ -212,8 +240,6 @@ public class MainActivity extends AppCompatActivity
 
         if (id == R.id.nav_tracks) {
             if (!(getSupportFragmentManager().findFragmentById(R.id.fragment_container) instanceof TracksFragment)) {
-                tracksFragment = TracksFragment.newInstance(songRepository);
-                tracksFragment.setRepository(songRepository);
                 getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, tracksFragment).commit();
             }
         } else if (id == R.id.nav_albums) {
