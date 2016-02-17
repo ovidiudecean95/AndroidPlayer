@@ -70,11 +70,13 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnPrepare
         IntentFilter filter = new IntentFilter();
         filter.addAction(NotificationPlayback.ACTION_CANCEL_NOTIFICATION);
         filter.addAction(NotificationPlayback.ACTION_PLAY_PAUSE_NOTIFICATION);
+        filter.addAction(NotificationPlayback.ACTION_PLAY_NEXT_NOTIFICATION);
         registerReceiver(notificationReceiver, filter);
     }
 
     public void setSongRepository(SongRepository songRepository) {
         this.mSongRepository = songRepository;
+        notificationBuilder.setSongRepository(songRepository);
     }
 
     public SongRepository getSongRepository() {
@@ -283,6 +285,13 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnPrepare
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
+                    }
+                    break;
+                case NotificationPlayback.ACTION_PLAY_NEXT_NOTIFICATION:
+                    try {
+                        nextSong();
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
                     break;
             }

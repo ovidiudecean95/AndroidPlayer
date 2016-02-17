@@ -59,6 +59,7 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.e(TAG, "onCreate");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -252,7 +253,7 @@ public class MainActivity extends AppCompatActivity
             getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, PlaylistFragment.newInstance()).commit();
         } else if (id == R.id.nav_favorites) {
             getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, FavoritesFragment.newInstance()).commit();
-        }else if (id == R.id.nav_share) {
+        } else if (id == R.id.nav_share) {
 
         } else if (id == R.id.nav_send) {
 

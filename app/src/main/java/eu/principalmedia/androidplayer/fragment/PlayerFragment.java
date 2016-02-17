@@ -103,8 +103,8 @@ public class PlayerFragment extends Fragment implements MediaPlayerService.Media
         progressSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                Log.e(TAG, "PROGRESS " + progress);
-                if (seekBar.isPressed()) {
+                Log.e(TAG, "PROGRESS " + progress + " " + fromUser);
+                if (fromUser) {
                     trackListener.onSeekChanged(progress);
                 }
             }
