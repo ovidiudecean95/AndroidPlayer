@@ -40,7 +40,7 @@ public class Animations {
         };
 
         // 1dp/ms
-        a.setDuration((int)(targetHeight / v.getContext().getResources().getDisplayMetrics().density));
+        a.setDuration((int)((targetHeight / v.getContext().getResources().getDisplayMetrics().density) * 1.5));
         Log.e(TAG, "expand Duration " + (int)(targetHeight / v.getContext().getResources().getDisplayMetrics().density));
         v.startAnimation(a);
     }
@@ -69,7 +69,7 @@ public class Animations {
         a.setAnimationListener(listener);
 
         // 1dp/ms
-        a.setDuration((int)(initialHeight / v.getContext().getResources().getDisplayMetrics().density));
+        a.setDuration((int)((initialHeight / v.getContext().getResources().getDisplayMetrics().density) * 1.5));
         Log.e(TAG, "collapse Duration " + (int)(initialHeight / v.getContext().getResources().getDisplayMetrics().density));
         v.startAnimation(a);
     }

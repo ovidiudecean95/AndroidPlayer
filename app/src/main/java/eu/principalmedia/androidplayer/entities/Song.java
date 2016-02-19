@@ -10,14 +10,24 @@ import java.io.File;
 public class Song {
 
     private String title;
-    private String artist;
     private String path;
     private String displayName;
     private String albumId;
+    private String albumName;
+    private String artist;
+    private String genre;
     private Uri uri;
 
     public Uri getUri() {
         return uri;
+    }
+
+    public String getAlbumName() {
+        return albumName;
+    }
+
+    public void setAlbumName(String albumName) {
+        this.albumName = albumName;
     }
 
     public String getAlbumId() {
@@ -50,6 +60,14 @@ public class Song {
 
     public void setArtist(String mArtist) {
         this.artist = mArtist;
+    }
+
+    public String getGenre() {
+        return genre;
+    }
+
+    public void setGenre(String genre) {
+        this.genre = genre;
     }
 
     public String getPath() {

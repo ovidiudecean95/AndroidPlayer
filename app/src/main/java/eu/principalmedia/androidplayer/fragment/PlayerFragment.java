@@ -85,6 +85,7 @@ public class PlayerFragment extends Fragment implements MediaPlayerService.Media
         timeTextView = (TextView) view.findViewById(R.id.time_text_view);
         progressSeekBar = (SeekBar) view.findViewById(R.id.playback_seekbar);
         titleTextView = (TextView) view.findViewById(R.id.title_text_view);
+        titleTextView.setSelected(true);
         playPauseButton = (ToggleButton) view.findViewById(R.id.play_pause_player_button);
         songImageView = (ImageView) view.findViewById(R.id.song_image_view);
 

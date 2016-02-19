@@ -26,8 +26,13 @@ import android.view.animation.BounceInterpolator;
 import android.view.animation.Transformation;
 import android.widget.FrameLayout;
 
+import com.google.android.gms.ads.AdListener;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
+
 import java.io.IOException;
 
+import eu.principalmedia.androidplayer.entities.Album;
 import eu.principalmedia.androidplayer.entities.Song;
 import eu.principalmedia.androidplayer.fragment.AlbumsFragment;
 import eu.principalmedia.androidplayer.fragment.ArtistsFragment;
@@ -35,6 +40,7 @@ import eu.principalmedia.androidplayer.fragment.FavoritesFragment;
 import eu.principalmedia.androidplayer.fragment.GenresFragment;
 import eu.principalmedia.androidplayer.fragment.PlayerFragment;
 import eu.principalmedia.androidplayer.fragment.PlaylistFragment;
+import eu.principalmedia.androidplayer.fragment.TrackAlbumFragment;
 import eu.principalmedia.androidplayer.interfaces.OnTrackListener;
 import eu.principalmedia.androidplayer.service.MediaPlayerService;
 import eu.principalmedia.androidplayer.R;
@@ -44,7 +50,7 @@ import eu.principalmedia.androidplayer.utils.Animations;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener,
-        OnTrackListener, PlayerFragment.PlayerListener {
+        OnTrackListener, PlayerFragment.PlayerListener, AlbumsFragment.AlbumListener{
 
     public static final String TAG = MainActivity.class.getSimpleName();
 
@@ -56,6 +62,9 @@ public class MainActivity extends AppCompatActivity
 
     TracksFragment tracksFragment;
     PlayerFragment playerFragment;
+    AlbumsFragment albumsFragment;
+
+    AdView adView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,6 +74,17 @@ public class MainActivity extends AppCompatActivity
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         fragmentContainer = (FrameLayout) findViewById(R.id.fragment_container);
         fragmentContainerPlayer = (FrameLayout) findViewById(R.id.fragment_container_player);
+        adView = (AdView) findViewById(R.id.adView);
+
+        AdRequest adRequest = new AdRequest.Builder().build();
+        adView.loadAd(adRequest);
+        adView.setAdListener(new AdListener() {
+            @Override
+            public void onAdLoaded() {
+                super.onAdLoaded();
+                adView.setVisibility(View.VISIBLE);
+            }
+        });
 
         setSupportActionBar(toolbar);
 
@@ -81,9 +101,9 @@ public class MainActivity extends AppCompatActivity
         Intent intent = new Intent(this, MediaPlayerService.class);
         bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
 
-        if (savedInstanceState != null) {
-            tracksFragment = (TracksFragment) getSupportFragmentManager().findFragmentById(R.id.fragment_container);
-        }
+//        if (savedInstanceState != null) {
+//            tracksFragment = (TracksFragment) getSupportFragmentManager().findFragmentById(R.id.fragment_container);
+//        }
 
     }
 
@@ -95,6 +115,9 @@ public class MainActivity extends AppCompatActivity
 
         tracksFragment = TracksFragment.newInstance();
         tracksFragment.setRepository(songRepository);
+
+        albumsFragment = AlbumsFragment.newInstance();
+        albumsFragment.setRepository(songRepository);
 
         getSupportFragmentManager().beginTransaction().add(R.id.fragment_container, tracksFragment).commit();
         if (mMediaPlayerService.isPlaying()) {
@@ -108,9 +131,6 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onDestroy() {
         Log.e(TAG, "onDestroy");
-//        mMediaPlayerService.removeMediaPlayerListener(playerFragment);
-//        mMediaPlayerService.removeMediaPlayerListener(tracksFragment);
-
         unbindService(mConnection);
         super.onDestroy();
     }
@@ -202,6 +222,18 @@ public class MainActivity extends AppCompatActivity
     };
 
     @Override
+    public void onAlbumClick(Album album) {
+        TrackAlbumFragment trackAlbumFragment = TrackAlbumFragment.newInstance();
+        trackAlbumFragment.setRepository(songRepository);
+        trackAlbumFragment.setAlbum(album);
+        trackAlbumFragment.setService(mMediaPlayerService);
+
+        getSupportFragmentManager().beginTransaction().setCustomAnimations(R.anim.enter_right, R.anim.exit_left, R.anim.enter_left, R.anim.exit_right)
+                .replace(R.id.fragment_container, trackAlbumFragment)
+                .addToBackStack(null).commit();
+    }
+
+    @Override
     public void onBackPressed() {
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
@@ -240,11 +272,14 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         if (id == R.id.nav_tracks) {
-            if (!(getSupportFragmentManager().findFragmentById(R.id.fragment_container) instanceof TracksFragment)) {
+            if (!(getSupportFragmentManager().findFragmentById(R.id.fragment_container).getClass() == TracksFragment.class)) {
+                getSupportFragmentManager().popBackStack();
                 getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, tracksFragment).commit();
             }
         } else if (id == R.id.nav_albums) {
-            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, AlbumsFragment.newInstance()).commit();
+            if (!(getSupportFragmentManager().findFragmentById(R.id.fragment_container) instanceof AlbumsFragment)) {
+                getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, albumsFragment).commit();
+            }
         } else if (id == R.id.nav_artists) {
             getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, ArtistsFragment.newInstance()).commit();
         } else if (id == R.id.nav_genres) {

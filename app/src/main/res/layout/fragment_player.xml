@@ -28,8 +28,13 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:lines="1"
+            android:singleLine="true"
             android:textColor="@android:color/white"
+            android:ellipsize="marquee"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:marqueeRepeatLimit="marquee_forever"
+            android:scrollHorizontally="true"
             tools:text="This is a very good song"/>
 
     </FrameLayout>
