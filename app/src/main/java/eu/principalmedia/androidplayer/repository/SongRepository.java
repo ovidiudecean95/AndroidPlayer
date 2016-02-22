@@ -24,7 +24,7 @@ public class SongRepository /*implements Serializable*/{
 
     public static final String TAG = SongRepository.class.getSimpleName();
 
-    public static final String GENRE_NAME = "genre_name";
+//    public static final String GENRE_NAME = "genre_name";
 
     Map<Integer, Bitmap> albumsBitmaps = new HashMap<>();
     Map<Integer, Album> albums = new HashMap<>();
@@ -66,10 +66,10 @@ public class SongRepository /*implements Serializable*/{
     public Song nextSong(Song song) {
         int index = mSongList.indexOf(song);
         ++index;
-        if (index < mSongList.size()) {
-            return mSongList.get(index);
+        if (index == -1 || index >= mSongList.size()) {
+            return mSongList.get(0);
         }
-        return mSongList.get(0);
+        return mSongList.get(index);
     }
 
     class FindMusicAsyncTask extends AsyncTask<Void, Void, Void> {
@@ -97,8 +97,8 @@ public class SongRepository /*implements Serializable*/{
             String order = MediaStore.Audio.Media.TITLE + " ASC";
             String[] projections = {MediaStore.Audio.Media.TITLE, MediaStore.Audio.Media.DATA,
                         MediaStore.Audio.Media.DISPLAY_NAME, MediaStore.Audio.Media.ALBUM_ID,
-                        MediaStore.Audio.Media.ALBUM, MediaStore.Audio.Media.ARTIST,
-                        GENRE_NAME};
+                        MediaStore.Audio.Media.ALBUM, MediaStore.Audio.Media.ARTIST/*,
+                        GENRE_NAME*/};
             Cursor cursor = contentResolver.query(mediaUri, projections, selection, null, order);
 
             if (cursor == null) {
@@ -116,7 +116,7 @@ public class SongRepository /*implements Serializable*/{
                     String albumId = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID));
                     String albumName = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM));
                     String artist = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST));
-                    String genre = cursor.getString(cursor.getColumnIndex(GENRE_NAME));
+//                    String genre = cursor.getString(cursor.getColumnIndex(GENRE_NAME));
 
 //                    if (cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media._ID)).equals("367")) {
 //                        for (int i = 0; i < cursor.getColumnCount(); ++i) {
@@ -131,7 +131,7 @@ public class SongRepository /*implements Serializable*/{
                     song.setAlbumId(albumId);
                     song.setAlbumName(albumName);
                     song.setArtist(artist);
-                    song.setGenre(genre);
+//                    song.setGenre(genre);
                     mSongList.add(song);
 
                     Log.e(TAG, "Album " + albumId);

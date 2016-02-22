@@ -49,7 +49,10 @@ public class PlayerFragment extends Fragment implements MediaPlayerService.Media
 
     private SongRepository songRepository;
     private Song currentSong;
-    boolean isPlaying;
+    private boolean isPlaying;
+    private int duration = 0;
+    private int currentPosition = 0;
+
 
     public static final String TAG = PlayerFragment.class.getSimpleName();
 
@@ -151,6 +154,7 @@ public class PlayerFragment extends Fragment implements MediaPlayerService.Media
             } else {
                 songImageView.setImageResource(R.drawable.no_image_black);
             }
+            onTimeChanged(currentPosition, duration);
         }
 
         return view;
@@ -159,6 +163,8 @@ public class PlayerFragment extends Fragment implements MediaPlayerService.Media
     private void syncWithService() {
         currentSong = mMediaPlayerService.getSong();
         isPlaying = mMediaPlayerService.isPlaying();
+        currentPosition = mMediaPlayerService.getCurrentPosition();
+        duration =  mMediaPlayerService.getSongDuration();
     }
 
     @Override

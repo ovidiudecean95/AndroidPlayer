@@ -60,6 +60,8 @@ public class TracksFragment extends Fragment implements MediaPlayerService.Media
     private boolean isPlaying = false;
     private int screenWidth = INDEFINITE;
     private int progress = INDEFINITE;
+    private int duration = 0;
+    private int currentPosition = 0;
 
     public static TracksFragment newInstance() {
         TracksFragment tracksFragment = new TracksFragment();
@@ -134,6 +136,8 @@ public class TracksFragment extends Fragment implements MediaPlayerService.Media
     private void syncWithService() {
         mSong = mMediaPlayerService.getSong();
         isPlaying = mMediaPlayerService.isPlaying();
+        currentPosition = mMediaPlayerService.getCurrentPosition();
+        duration =  mMediaPlayerService.getSongDuration();
     }
 
     @Override
@@ -145,6 +149,9 @@ public class TracksFragment extends Fragment implements MediaPlayerService.Media
     @Override
     public boolean onTimeChanged(int current, int max) {
         Log.e(TAG, TAG);
+
+        currentPosition = current;
+        duration = max;
 
         if (getActivity() == null) {
             return false;
@@ -229,7 +236,7 @@ public class TracksFragment extends Fragment implements MediaPlayerService.Media
             @Override
             public void onClick(View v) {
                 boolean play = !playPauseToggleButton.isChecked();
-                onItemClickListener.onItemClick(getPosition(), play);
+                onItemClickListener.onPlayPauseClick(getPosition(), play);
             }
 
             @Override
@@ -302,7 +309,7 @@ public class TracksFragment extends Fragment implements MediaPlayerService.Media
                 }
                 holder.progressFrameLayout.setVisibility(View.VISIBLE);
                 frameLayout = holder.progressFrameLayout;
-
+                onTimeChanged(currentPosition, duration);
             } else {
                 holder.progressFrameLayout.setVisibility(View.INVISIBLE);
             }

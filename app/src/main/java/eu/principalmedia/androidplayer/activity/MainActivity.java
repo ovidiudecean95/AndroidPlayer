@@ -24,7 +24,9 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.view.animation.BounceInterpolator;
 import android.view.animation.Transformation;
+import android.widget.CompoundButton;
 import android.widget.FrameLayout;
+import android.widget.ToggleButton;
 
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
@@ -57,6 +59,7 @@ public class MainActivity extends AppCompatActivity
     public MediaPlayerService mMediaPlayerService;
     FrameLayout fragmentContainer;
     FrameLayout fragmentContainerPlayer;
+    ToggleButton playerHideShowButton;
 
     SongRepository songRepository;
 
@@ -71,9 +74,26 @@ public class MainActivity extends AppCompatActivity
         Log.e(TAG, "onCreate");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        final Animation rotateAnim = AnimationUtils.loadAnimation(this, R.anim.button_rotate);
+
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         fragmentContainer = (FrameLayout) findViewById(R.id.fragment_container);
         fragmentContainerPlayer = (FrameLayout) findViewById(R.id.fragment_container_player);
+        playerHideShowButton = (ToggleButton) findViewById(R.id.player_hide_show_button);
+        playerHideShowButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (buttonView.isPressed()) {
+                    if (isChecked) {
+                        getSupportFragmentManager().beginTransaction().add(R.id.fragment_container_player, playerFragment).commit();
+                    } else {
+                        removePlayerFragment();
+                    }
+                    playerHideShowButton.startAnimation(rotateAnim);
+                }
+            }
+        });
         adView = (AdView) findViewById(R.id.adView);
 
         AdRequest adRequest = new AdRequest.Builder().build();
@@ -120,9 +140,12 @@ public class MainActivity extends AppCompatActivity
         albumsFragment.setRepository(songRepository);
 
         getSupportFragmentManager().beginTransaction().add(R.id.fragment_container, tracksFragment).commit();
-        if (mMediaPlayerService.isPlaying()) {
+//        if (mMediaPlayerService.isPlaying()) {
+
             getSupportFragmentManager().beginTransaction().add(R.id.fragment_container_player, playerFragment).commit();
-        }
+            playerHideShowButton.setChecked(true);
+
+//        }
 
         playerFragment.setService(mMediaPlayerService);
         tracksFragment.setService(mMediaPlayerService);
@@ -146,20 +169,20 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onAddPlayerFragment() {
-        if (getSupportFragmentManager().findFragmentById(R.id.fragment_container_player) == null) {
-            getSupportFragmentManager().beginTransaction()
-                    .add(R.id.fragment_container_player, playerFragment).commit();
-        }
+//        if (getSupportFragmentManager().findFragmentById(R.id.fragment_container_player) == null) {
+//            getSupportFragmentManager().beginTransaction()
+//                    .add(R.id.fragment_container_player, playerFragment).commit();
+//        }
     }
 
     @Override
     public void onAddRemovePlayerFragment() {
-        if (getSupportFragmentManager().findFragmentById(R.id.fragment_container_player) == null) {
-            getSupportFragmentManager().beginTransaction()
-                    .add(R.id.fragment_container_player, playerFragment).commit();
-        } else {
-            removePlayerFragment();
-        }
+//        if (getSupportFragmentManager().findFragmentById(R.id.fragment_container_player) == null) {
+//            getSupportFragmentManager().beginTransaction()
+//                    .add(R.id.fragment_container_player, playerFragment).commit();
+//        } else {
+//            removePlayerFragment();
+//        }
     }
 
     @Override

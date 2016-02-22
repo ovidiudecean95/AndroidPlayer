@@ -57,12 +57,15 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnPrepare
     NotificationPlayback notificationBuilder;
     private SongRepository mSongRepository;
 
+    private int duration = 0;
+    private int currentPosition = 0;
+
     @Override
     public void onCreate() {
         Log.e(TAG, "OnCreate");
         super.onCreate();
         notificationBuilder = new NotificationPlayback(this);
-        notificationBuilder.setSmallIcon(R.drawable.no_image);
+        notificationBuilder.setSmallIcon(R.drawable.notification);
         Intent notificationIntent = new Intent(this, MainActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
         notificationBuilder.setContentIntent(pendingIntent);
@@ -77,6 +80,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnPrepare
     public void setSongRepository(SongRepository songRepository) {
         this.mSongRepository = songRepository;
         notificationBuilder.setSongRepository(songRepository);
+//        mSong = mSongRepository.nextSong(null);
     }
 
     public SongRepository getSongRepository() {
@@ -162,6 +166,13 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnPrepare
         }
     }
 
+    public int getSongDuration() {
+        return duration;
+    }
+
+    public int getCurrentPosition() {
+        return currentPosition;
+    }
 
     @Override
     public boolean onError(MediaPlayer mp, int what, int extra) {
@@ -230,6 +241,8 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnPrepare
         void onPause(Song song);
     }
 
+
+
     ScheduledExecutorService myScheduledExecutorService;
     private void startTimeListener() {
         myScheduledExecutorService = Executors.newScheduledThreadPool(1);
@@ -238,8 +251,8 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnPrepare
                 new Runnable() {
                     @Override
                     public void run() {
-                        int duration = mMediaPlayer.getDuration();
-                        int currentPosition = mMediaPlayer.getCurrentPosition();
+                        duration = mMediaPlayer.getDuration();
+                        currentPosition = mMediaPlayer.getCurrentPosition();
 //                        Log.e(TAG, duration + " " + currentPosition);
                         for (Iterator<MediaPlayerListener> iterator = mediaPlayerListeners.iterator(); iterator.hasNext();) {
                             MediaPlayerListener mediaPlayerListener = iterator.next();
