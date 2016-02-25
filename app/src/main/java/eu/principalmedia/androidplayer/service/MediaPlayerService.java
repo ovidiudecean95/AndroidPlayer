@@ -77,10 +77,16 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnPrepare
         registerReceiver(notificationReceiver, filter);
     }
 
-    public void setSongRepository(SongRepository songRepository) {
+    public void setSongRepository(final SongRepository songRepository) {
         this.mSongRepository = songRepository;
         notificationBuilder.setSongRepository(songRepository);
-//        mSong = mSongRepository.nextSong(null);
+        songRepository.findSongs(new SongRepository.OnResultListener<Song>() {
+            @Override
+            public void onResult(List<Song> list) {
+                mSong = songRepository.nextSong(null);
+                setSong();
+            }
+        });
     }
 
     public SongRepository getSongRepository() {
@@ -144,6 +150,17 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnPrepare
             if (mediaPlayerListener != null) {
                 Log.e(TAG, "PAUSE NOT NULL");
                 mediaPlayerListener.onPause(mSong);
+            } else {
+                Log.e(TAG, "PAUSE NULL");
+            }
+        }
+    }
+
+    public void setSong() {
+        for (MediaPlayerListener mediaPlayerListener : mediaPlayerListeners) {
+            if (mediaPlayerListener != null) {
+                Log.e(TAG, "PAUSE NOT NULL");
+                mediaPlayerListener.setFirstSong(mSong);
             } else {
                 Log.e(TAG, "PAUSE NULL");
             }
@@ -239,6 +256,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnPrepare
         boolean onTimeChanged(int current, int max);
         void onPlay(Song lastSong, Song currentSong);
         void onPause(Song song);
+        void setFirstSong(Song song);
     }
 
 

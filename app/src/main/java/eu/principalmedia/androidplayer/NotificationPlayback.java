@@ -75,6 +75,10 @@ public class NotificationPlayback extends NotificationCompat.Builder implements 
         updateNotification(song);
     }
 
+    @Override
+    public void setFirstSong(Song song) {
+    }
+
     private void updateNotification(Song song) {
         Notification notification = this.build();
 

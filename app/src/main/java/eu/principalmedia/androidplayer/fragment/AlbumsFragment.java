@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import eu.principalmedia.androidplayer.R;
+import eu.principalmedia.androidplayer.activity.MainActivity;
 import eu.principalmedia.androidplayer.entities.Album;
 import eu.principalmedia.androidplayer.entities.Song;
 import eu.principalmedia.androidplayer.repository.SongRepository;
@@ -56,7 +57,8 @@ public class AlbumsFragment extends Fragment {
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        ((AppCompatActivity) activity).getSupportActionBar().setTitle(ALBUM_TITLE);
+//        ((AppCompatActivity) activity).getSupportActionBar().setTitle(ALBUM_TITLE);
+        ((TextView) (((MainActivity) getActivity()).mToolbar.findViewById(R.id.title_toolbar))).setText(ALBUM_TITLE);
         albumListener = (AlbumListener) activity;
     }
 

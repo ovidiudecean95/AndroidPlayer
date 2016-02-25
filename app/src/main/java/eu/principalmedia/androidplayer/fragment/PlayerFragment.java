@@ -72,9 +72,10 @@ public class PlayerFragment extends Fragment implements MediaPlayerService.Media
         syncWithService();
     }
 
-    public void setSong(Song song) {
-        this.currentSong = song;
-    }
+//    public void setSong(Song song) {
+//        this.currentSong = song;
+//        Log.e(TAG, "set song set sgonegse gsegjnaskgnse kgse jgaenfasjke casejfnsfklsfjas");
+//    }
 
     public void setIsPlaying(boolean isPlaying) {
         this.isPlaying = isPlaying;
@@ -260,6 +261,20 @@ public class PlayerFragment extends Fragment implements MediaPlayerService.Media
         isPlaying = false;
         if (playPauseButton != null) {
             playPauseButton.setChecked(false);
+        }
+    }
+
+    @Override
+    public void setFirstSong(Song song) {
+        currentSong = song;
+        if (titleTextView != null) {
+            titleTextView.setText(currentSong.getDisplayName());
+            Bitmap bitmap = songRepository.getAlbumBitmap(Integer.valueOf(currentSong.getAlbumId()));
+            if (bitmap != null) {
+                songImageView.setImageBitmap(bitmap);
+            } else {
+                songImageView.setImageResource(R.drawable.no_image_black);
+            }
         }
     }
 }

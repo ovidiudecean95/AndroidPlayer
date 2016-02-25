@@ -7,6 +7,7 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.provider.MediaStore;
+import android.support.v4.util.Pair;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -15,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 import eu.principalmedia.androidplayer.entities.Album;
+import eu.principalmedia.androidplayer.entities.Artist;
 import eu.principalmedia.androidplayer.entities.Song;
 
 /**
@@ -24,13 +26,16 @@ public class SongRepository /*implements Serializable*/{
 
     public static final String TAG = SongRepository.class.getSimpleName();
 
-//    public static final String GENRE_NAME = "genre_name";
+    public static final String GENRE_NAME = "genre_name";
 
-    Map<Integer, Bitmap> albumsBitmaps = new HashMap<>();
     Map<Integer, Album> albums = new HashMap<>();
+    Map<Integer, Artist> artists = new HashMap<>();
+
+    FindMusicAsyncTask findMusicAsyncTask = new FindMusicAsyncTask();
+    private boolean findSongsFinish = false;
 
     public interface OnResultListener<E> {
-        void onResult(List<E> songList);
+        void onResult(List<E> list);
     }
 
     List<Song> mSongList = new ArrayList<>();
@@ -38,30 +43,32 @@ public class SongRepository /*implements Serializable*/{
 
     public SongRepository(ContentResolver contentResolver) {
         this.contentResolver = contentResolver;
+        findMusicAsyncTask.execute();
     }
 
     public void findSongs(OnResultListener<Song> onResultListener) {
-        if (mSongList.size() != 0) {
+        if (findSongsFinish) {
             onResultListener.onResult(mSongList);
         } else {
-            new FindMusicAsyncTask(onResultListener).execute();
+            findMusicAsyncTask.setOnResultListener(onResultListener, Song.class);
         }
     }
 
     public void findAlbums(final OnResultListener<Album> onResultListener) {
-        if (albums.size() != 0) {
+        if (findSongsFinish) {
             onResultListener.onResult(new ArrayList<>(albums.values()));
         } else {
-            new FindMusicAsyncTask(onResultListener) {
-                @Override
-                protected void onPreExecute() {
-                    onResultListener.onResult(new ArrayList<>(albums.values()));
-                }
-            }.
-            execute();
+            findMusicAsyncTask.setOnResultListener(onResultListener, Album.class);
         }
     }
 
+    public void findArtists(final OnResultListener<Artist> onResultListener) {
+        if (findSongsFinish) {
+            onResultListener.onResult(new ArrayList<>(artists.values()));
+        } else {
+            findMusicAsyncTask.setOnResultListener(onResultListener, Artist.class);
+        }
+    }
 
     public Song nextSong(Song song) {
         int index = mSongList.indexOf(song);
@@ -74,10 +81,10 @@ public class SongRepository /*implements Serializable*/{
 
     class FindMusicAsyncTask extends AsyncTask<Void, Void, Void> {
 
-        private OnResultListener onResultListener;
+        private List<Pair<OnResultListener, Class>> onResultListeners = new ArrayList<>();
 
-        public FindMusicAsyncTask(OnResultListener onResultListener) {
-            this.onResultListener = onResultListener;
+        public void setOnResultListener(OnResultListener resultListener, Class classType) {
+            onResultListeners.add(new Pair<>(resultListener, classType));
         }
 
         @Override
@@ -86,7 +93,18 @@ public class SongRepository /*implements Serializable*/{
 
         @Override
         protected void onPostExecute(Void aVoid) {
-            onResultListener.onResult(mSongList);
+            findSongsFinish = true;
+            for (Pair<OnResultListener, Class> pair: onResultListeners) {
+                if (pair.second == Song.class) {
+                    pair.first.onResult(mSongList);
+                }
+                if (pair.second == Album.class) {
+                    pair.first.onResult(new ArrayList<>(albums.values()));
+                }
+                if (pair.second == Artist.class) {
+                    pair.first.onResult(new ArrayList<>(artists.values()));
+                }
+            }
         }
 
         @Override
@@ -94,11 +112,11 @@ public class SongRepository /*implements Serializable*/{
 
             Uri mediaUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
             String selection = MediaStore.Audio.Media.IS_MUSIC + "!= 0";
-            String order = MediaStore.Audio.Media.TITLE + " ASC";
+            String order = MediaStore.Audio.Media.DISPLAY_NAME + " ASC";
             String[] projections = {MediaStore.Audio.Media.TITLE, MediaStore.Audio.Media.DATA,
                         MediaStore.Audio.Media.DISPLAY_NAME, MediaStore.Audio.Media.ALBUM_ID,
-                        MediaStore.Audio.Media.ALBUM, MediaStore.Audio.Media.ARTIST/*,
-                        GENRE_NAME*/};
+                        MediaStore.Audio.Media.ALBUM, MediaStore.Audio.Media.ARTIST,
+                        /*GENRE_NAME,*/ MediaStore.Audio.Media.ARTIST_ID};
             Cursor cursor = contentResolver.query(mediaUri, projections, selection, null, order);
 
             if (cursor == null) {
@@ -115,13 +133,14 @@ public class SongRepository /*implements Serializable*/{
                     String displayName = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DISPLAY_NAME));
                     String albumId = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID));
                     String albumName = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM));
-                    String artist = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST));
+                    String artistName = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST));
+                    String artistId = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST_ID));
 //                    String genre = cursor.getString(cursor.getColumnIndex(GENRE_NAME));
 
 //                    if (cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media._ID)).equals("367")) {
-//                        for (int i = 0; i < cursor.getColumnCount(); ++i) {
-//                            Log.e("INDEX", cursor.getColumnName(i) + ":  " + cursor.getString(i));
-//                        }
+                        for (int i = 0; i < cursor.getColumnCount(); ++i) {
+                            Log.e("INDEX", cursor.getColumnName(i) + ":  " + cursor.getString(i));
+                        }
 //                    }
 
                     Song song = new Song();
@@ -130,17 +149,25 @@ public class SongRepository /*implements Serializable*/{
                     song.setDisplayName(displayName);
                     song.setAlbumId(albumId);
                     song.setAlbumName(albumName);
-                    song.setArtist(artist);
+                    song.setArtistId(artistId);
+                    song.setArtistName(artistName);
 //                    song.setGenre(genre);
                     mSongList.add(song);
 
                     Log.e(TAG, "Album " + albumId);
-                    if (!albumsBitmaps.containsKey(Integer.valueOf(albumId))) {
+                    if (!albums.containsKey(Integer.valueOf(albumId))) {
                         Album album = new Album();
                         album.setAlbumId(albumId);
                         album.setAlbumName(albumName);
 
                         addAlbum(Integer.valueOf(albumId), album);
+                    }
+
+                    if (!artists.containsKey(Integer.valueOf(artistId))) {
+                        Artist artist = new Artist();
+                        artist.setArtistName(artistName);
+                        artist.setArtistId(artistId);
+                        artists.put(Integer.valueOf(artistId), artist);
                     }
                 } while (cursor.moveToNext());
 
@@ -157,7 +184,6 @@ public class SongRepository /*implements Serializable*/{
         try {
             Bitmap bitmap = MediaStore.Images.Media.getBitmap(
                     contentResolver, albumArtUri);
-            albumsBitmaps.put(albumId, bitmap);
 
             album.setAlbumImage(bitmap);
             albums.put(albumId, album);
@@ -170,7 +196,7 @@ public class SongRepository /*implements Serializable*/{
     }
 
     public Bitmap getAlbumBitmap(int albumId) {
-        return albumsBitmaps.get(albumId);
+        return albums.get(albumId).getAlbumImage();
     }
 
 }

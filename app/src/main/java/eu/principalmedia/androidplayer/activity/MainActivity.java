@@ -43,11 +43,11 @@ import eu.principalmedia.androidplayer.fragment.GenresFragment;
 import eu.principalmedia.androidplayer.fragment.PlayerFragment;
 import eu.principalmedia.androidplayer.fragment.PlaylistFragment;
 import eu.principalmedia.androidplayer.fragment.TrackAlbumFragment;
+import eu.principalmedia.androidplayer.fragment.TrackListFragment;
 import eu.principalmedia.androidplayer.interfaces.OnTrackListener;
 import eu.principalmedia.androidplayer.service.MediaPlayerService;
 import eu.principalmedia.androidplayer.R;
 import eu.principalmedia.androidplayer.repository.SongRepository;
-import eu.principalmedia.androidplayer.fragment.TracksFragment;
 import eu.principalmedia.androidplayer.utils.Animations;
 
 public class MainActivity extends AppCompatActivity
@@ -55,6 +55,7 @@ public class MainActivity extends AppCompatActivity
         OnTrackListener, PlayerFragment.PlayerListener, AlbumsFragment.AlbumListener{
 
     public static final String TAG = MainActivity.class.getSimpleName();
+    public Toolbar mToolbar;
 
     public MediaPlayerService mMediaPlayerService;
     FrameLayout fragmentContainer;
@@ -63,9 +64,9 @@ public class MainActivity extends AppCompatActivity
 
     SongRepository songRepository;
 
-    TracksFragment tracksFragment;
+//    TrackListFragment tracksFragment;
     PlayerFragment playerFragment;
-    AlbumsFragment albumsFragment;
+//    AlbumsFragment albumsFragment;
 
     AdView adView;
 
@@ -77,7 +78,7 @@ public class MainActivity extends AppCompatActivity
 
         final Animation rotateAnim = AnimationUtils.loadAnimation(this, R.anim.button_rotate);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        mToolbar = (Toolbar) findViewById(R.id.toolbar);
         fragmentContainer = (FrameLayout) findViewById(R.id.fragment_container);
         fragmentContainerPlayer = (FrameLayout) findViewById(R.id.fragment_container_player);
         playerHideShowButton = (ToggleButton) findViewById(R.id.player_hide_show_button);
@@ -94,8 +95,8 @@ public class MainActivity extends AppCompatActivity
                 }
             }
         });
-        adView = (AdView) findViewById(R.id.adView);
 
+        adView = (AdView) findViewById(R.id.adView);
         AdRequest adRequest = new AdRequest.Builder().build();
         adView.loadAd(adRequest);
         adView.setAdListener(new AdListener() {
@@ -106,11 +107,11 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
-        setSupportActionBar(toolbar);
+        setSupportActionBar(mToolbar);
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+                this, drawer, mToolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.setDrawerListener(toggle);
         toggle.syncState();
 
@@ -133,10 +134,10 @@ public class MainActivity extends AppCompatActivity
         playerFragment = PlayerFragment.newInstance();
         playerFragment.setSongRepository(songRepository);
 
-        tracksFragment = TracksFragment.newInstance();
+        TrackListFragment tracksFragment = TrackListFragment.newInstance(TrackListFragment.TRACKS);
         tracksFragment.setRepository(songRepository);
 
-        albumsFragment = AlbumsFragment.newInstance();
+        AlbumsFragment albumsFragment = AlbumsFragment.newInstance();
         albumsFragment.setRepository(songRepository);
 
         getSupportFragmentManager().beginTransaction().add(R.id.fragment_container, tracksFragment).commit();
@@ -230,8 +231,9 @@ public class MainActivity extends AppCompatActivity
             if (mMediaPlayerService.getSongRepository() != null) {
                 addFragments(mMediaPlayerService.getSongRepository());
             } else {
-                addFragments(new SongRepository(getContentResolver()));
+                songRepository = new SongRepository(getContentResolver());
                 mMediaPlayerService.setSongRepository(songRepository);
+                addFragments(songRepository);
             }
 
 //            mMediaPlayerService.setMediaPlayerListener(playerFragment);
@@ -246,13 +248,12 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onAlbumClick(Album album) {
-        TrackAlbumFragment trackAlbumFragment = TrackAlbumFragment.newInstance();
-        trackAlbumFragment.setRepository(songRepository);
-        trackAlbumFragment.setAlbum(album);
-        trackAlbumFragment.setService(mMediaPlayerService);
+        TrackListFragment trackListFragment = TrackListFragment.newInstance(TrackListFragment.ALBUMS, album.getAlbumId());
+        trackListFragment.setRepository(songRepository);
+        trackListFragment.setService(mMediaPlayerService);
 
         getSupportFragmentManager().beginTransaction().setCustomAnimations(R.anim.enter_right, R.anim.exit_left, R.anim.enter_left, R.anim.exit_right)
-                .replace(R.id.fragment_container, trackAlbumFragment)
+                .replace(R.id.fragment_container, trackListFragment)
                 .addToBackStack(null).commit();
     }
 
@@ -295,12 +296,20 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         if (id == R.id.nav_tracks) {
-            if (!(getSupportFragmentManager().findFragmentById(R.id.fragment_container).getClass() == TracksFragment.class)) {
+            if (!(getSupportFragmentManager().findFragmentById(R.id.fragment_container).getClass() == TrackListFragment.class)) {
+                TrackListFragment tracksFragment = TrackListFragment.newInstance(TrackListFragment.TRACKS);
+                tracksFragment.setRepository(songRepository);
+                tracksFragment.setService(mMediaPlayerService);
+
                 getSupportFragmentManager().popBackStack();
                 getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, tracksFragment).commit();
             }
         } else if (id == R.id.nav_albums) {
             if (!(getSupportFragmentManager().findFragmentById(R.id.fragment_container) instanceof AlbumsFragment)) {
+                AlbumsFragment albumsFragment = AlbumsFragment.newInstance();
+                albumsFragment.setRepository(songRepository);
+
+                getSupportFragmentManager().popBackStack();
                 getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, albumsFragment).commit();
             }
         } else if (id == R.id.nav_artists) {

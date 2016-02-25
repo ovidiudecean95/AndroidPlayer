@@ -21,17 +21,18 @@ import eu.principalmedia.androidplayer.repository.SongRepository;
 /**
  * Created by Ovidiu on 2/19/2016.
  */
-public class TrackAlbumFragment extends TracksFragment {
+public class TrackAlbumFragment extends TrackListFragment {
 
     private Album mAlbum;
 
-    public static TrackAlbumFragment newInstance() {
-        TrackAlbumFragment trackAlbumFragment = new TrackAlbumFragment();
-        return trackAlbumFragment;
+    public TrackAlbumFragment() {
+        super();
     }
 
-    public void setAlbum(Album album) {
-        this.mAlbum = album;
+    public static TrackAlbumFragment newInstance() {
+
+        TrackAlbumFragment trackAlbumFragment = new TrackAlbumFragment();
+        return trackAlbumFragment;
     }
 
     @Nullable
@@ -66,6 +67,5 @@ public class TrackAlbumFragment extends TracksFragment {
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle(AlbumsFragment.ALBUM_TITLE);
     }
 }

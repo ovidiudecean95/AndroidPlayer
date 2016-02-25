@@ -14,9 +14,26 @@ public class Song {
     private String displayName;
     private String albumId;
     private String albumName;
-    private String artist;
-    private String genre;
     private Uri uri;
+    private String artistId;
+    private String artistName;
+    private String genre;
+
+    public String getArtistId() {
+        return artistId;
+    }
+
+    public void setArtistId(String artistId) {
+        this.artistId = artistId;
+    }
+
+    public String getArtistName() {
+        return artistName;
+    }
+
+    public void setArtistName(String artistName) {
+        this.artistName = artistName;
+    }
 
     public Uri getUri() {
         return uri;
@@ -52,14 +69,6 @@ public class Song {
 
     public void setTitle(String mTitle) {
         this.title = mTitle;
-    }
-
-    public String getArtist() {
-        return artist;
-    }
-
-    public void setArtist(String mArtist) {
-        this.artist = mArtist;
     }
 
     public String getGenre() {
