@@ -4,6 +4,7 @@ import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.provider.MediaStore;
@@ -138,9 +139,9 @@ public class SongRepository /*implements Serializable*/{
 //                    String genre = cursor.getString(cursor.getColumnIndex(GENRE_NAME));
 
 //                    if (cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media._ID)).equals("367")) {
-                        for (int i = 0; i < cursor.getColumnCount(); ++i) {
-                            Log.e("INDEX", cursor.getColumnName(i) + ":  " + cursor.getString(i));
-                        }
+//                        for (int i = 0; i < cursor.getColumnCount(); ++i) {
+//                            Log.e("INDEX", cursor.getColumnName(i) + ":  " + cursor.getString(i));
+//                        }
 //                    }
 
                     Song song = new Song();
@@ -161,6 +162,8 @@ public class SongRepository /*implements Serializable*/{
                         album.setAlbumName(albumName);
 
                         addAlbum(Integer.valueOf(albumId), album);
+                    } else {
+                        albums.get(Integer.valueOf(albumId)).incNumberSongs();
                     }
 
                     if (!artists.containsKey(Integer.valueOf(artistId))) {
@@ -168,7 +171,10 @@ public class SongRepository /*implements Serializable*/{
                         artist.setArtistName(artistName);
                         artist.setArtistId(artistId);
                         artists.put(Integer.valueOf(artistId), artist);
+                    } else {
+                        artists.get(Integer.valueOf(artistId)).incNumberSongs();
                     }
+
                 } while (cursor.moveToNext());
 
                 cursor.close();
@@ -184,6 +190,13 @@ public class SongRepository /*implements Serializable*/{
         try {
             Bitmap bitmap = MediaStore.Images.Media.getBitmap(
                     contentResolver, albumArtUri);
+            Log.e(TAG, "SIZE " + bitmap.getHeight() + " " + bitmap.getWidth());
+
+
+//            Bitmap resizeBitmap = Bitmap.createScaledBitmap(bitmap, 60, 60, false);
+//            bitmap.recycle();
+
+//            Log.e(TAG, "SIZE " + resizeBitmap.getHeight() + " " + resizeBitmap.getWidth());
 
             album.setAlbumImage(bitmap);
             albums.put(albumId, album);

@@ -10,6 +10,19 @@ public class Album {
     private String albumId;
     private String albumName;
     private Bitmap albumImage;
+    private int numberOfSongs = 1;
+
+    public void incNumberSongs() {
+        ++ numberOfSongs;
+    }
+
+    public int getNumberOfSongs() {
+        return numberOfSongs;
+    }
+
+    public void setNumberOfSongs(int numberOfSongs) {
+        this.numberOfSongs = numberOfSongs;
+    }
 
     public String getAlbumId() {
         return albumId;

@@ -7,6 +7,19 @@ public class Artist {
 
     private String artistId;
     private String artistName;
+    private int numberOfSongs = 1;
+
+    public void incNumberSongs() {
+        ++ numberOfSongs;
+    }
+
+    public int getNumberOfSongs() {
+        return numberOfSongs;
+    }
+
+    public void setNumberOfSongs(int numberOfSongs) {
+        this.numberOfSongs = numberOfSongs;
+    }
 
     public String getArtistId() {
         return artistId;

@@ -15,6 +15,7 @@ import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
 import android.widget.CompoundButton;
 import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
@@ -25,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import de.hdodenhof.circleimageview.CircleImageView;
+import eu.principalmedia.androidplayer.FragmentUtils;
 import eu.principalmedia.androidplayer.R;
 import eu.principalmedia.androidplayer.activity.MainActivity;
 import eu.principalmedia.androidplayer.entities.Song;
@@ -92,6 +94,18 @@ public class TrackListFragment extends Fragment implements MediaPlayerService.Me
 //        songRepository = (SongRepository) getArguments().getSerializable(KEY_REPOSITORY);
     }
 
+    @Override
+    public Animation onCreateAnimation(int transit, boolean enter, int nextAnim) {
+        if (FragmentUtils.sDisableFragmentAnimations) {
+//            return null;
+
+            Animation animation = new Animation() {};
+            animation.setDuration(0);
+            return animation;
+        }
+        return super.onCreateAnimation(transit, enter, nextAnim);
+    }
+
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -116,6 +130,13 @@ public class TrackListFragment extends Fragment implements MediaPlayerService.Me
                     case ALBUMS:
                         for (Song song : songList) {
                             if (song.getAlbumId().equals(entityId)) {
+                                mSongList.add(song);
+                            }
+                        }
+                        break;
+                    case ARTISTS:
+                        for (Song song : songList) {
+                            if (song.getArtistId().equals(entityId)) {
                                 mSongList.add(song);
                             }
                         }

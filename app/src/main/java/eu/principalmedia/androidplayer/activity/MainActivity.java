@@ -1,14 +1,13 @@
 package eu.principalmedia.androidplayer.activity;
 
-import android.animation.ObjectAnimator;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.design.widget.NavigationView;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -18,12 +17,8 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
-import android.view.ViewPropertyAnimator;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
-import android.view.animation.BounceInterpolator;
-import android.view.animation.Transformation;
 import android.widget.CompoundButton;
 import android.widget.FrameLayout;
 import android.widget.ToggleButton;
@@ -34,15 +29,15 @@ import com.google.android.gms.ads.AdView;
 
 import java.io.IOException;
 
+import eu.principalmedia.androidplayer.FragmentUtils;
 import eu.principalmedia.androidplayer.entities.Album;
+import eu.principalmedia.androidplayer.entities.Artist;
 import eu.principalmedia.androidplayer.entities.Song;
 import eu.principalmedia.androidplayer.fragment.AlbumsFragment;
 import eu.principalmedia.androidplayer.fragment.ArtistsFragment;
 import eu.principalmedia.androidplayer.fragment.FavoritesFragment;
-import eu.principalmedia.androidplayer.fragment.GenresFragment;
 import eu.principalmedia.androidplayer.fragment.PlayerFragment;
 import eu.principalmedia.androidplayer.fragment.PlaylistFragment;
-import eu.principalmedia.androidplayer.fragment.TrackAlbumFragment;
 import eu.principalmedia.androidplayer.fragment.TrackListFragment;
 import eu.principalmedia.androidplayer.interfaces.OnTrackListener;
 import eu.principalmedia.androidplayer.service.MediaPlayerService;
@@ -52,7 +47,8 @@ import eu.principalmedia.androidplayer.utils.Animations;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener,
-        OnTrackListener, PlayerFragment.PlayerListener, AlbumsFragment.AlbumListener{
+        OnTrackListener, PlayerFragment.PlayerListener, AlbumsFragment.AlbumListener,
+        ArtistsFragment.ArtistsListener{
 
     public static final String TAG = MainActivity.class.getSimpleName();
     public Toolbar mToolbar;
@@ -258,6 +254,17 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
+    public void onArtistClick(Artist artist) {
+        TrackListFragment trackListFragment = TrackListFragment.newInstance(TrackListFragment.ARTISTS, artist.getArtistId());
+        trackListFragment.setRepository(songRepository);
+        trackListFragment.setService(mMediaPlayerService);
+
+        getSupportFragmentManager().beginTransaction().setCustomAnimations(R.anim.enter_right, R.anim.exit_left, R.anim.enter_left, R.anim.exit_right)
+                .replace(R.id.fragment_container, trackListFragment)
+                .addToBackStack(null).commit();
+    }
+
+    @Override
     public void onBackPressed() {
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
@@ -301,22 +308,41 @@ public class MainActivity extends AppCompatActivity
                 tracksFragment.setRepository(songRepository);
                 tracksFragment.setService(mMediaPlayerService);
 
-                getSupportFragmentManager().popBackStack();
+//                    getSupportFragmentManager().popBackStack();
+                clearBackStack();
                 getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, tracksFragment).commit();
+            } else {
+                if (!((TrackListFragment) getSupportFragmentManager().findFragmentById(R.id.fragment_container)).type.equals(TrackListFragment.TRACKS)) {
+                    TrackListFragment tracksFragment = TrackListFragment.newInstance(TrackListFragment.TRACKS);
+                    tracksFragment.setRepository(songRepository);
+                    tracksFragment.setService(mMediaPlayerService);
+
+//                    getSupportFragmentManager().popBackStack();
+                    clearBackStack();
+                    getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, tracksFragment).commit();
+                }
             }
         } else if (id == R.id.nav_albums) {
             if (!(getSupportFragmentManager().findFragmentById(R.id.fragment_container) instanceof AlbumsFragment)) {
                 AlbumsFragment albumsFragment = AlbumsFragment.newInstance();
                 albumsFragment.setRepository(songRepository);
 
-                getSupportFragmentManager().popBackStack();
+//                getSupportFragmentManager().popBackStack();
+                clearBackStack();
                 getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, albumsFragment).commit();
             }
         } else if (id == R.id.nav_artists) {
-            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, ArtistsFragment.newInstance()).commit();
-        } else if (id == R.id.nav_genres) {
+            if (!(getSupportFragmentManager().findFragmentById(R.id.fragment_container) instanceof ArtistsFragment)) {
+                ArtistsFragment artistsFragment = ArtistsFragment.newInstance();
+                artistsFragment.setRepository(songRepository);
+
+//                getSupportFragmentManager().popBackStack();
+                clearBackStack();
+                getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, artistsFragment).commit();
+            }
+        } /*else if (id == R.id.nav_genres) {
             getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, GenresFragment.newInstance()).commit();
-        } else if (id == R.id.nav_playlist) {
+        }*/ else if (id == R.id.nav_playlist) {
             getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, PlaylistFragment.newInstance()).commit();
         } else if (id == R.id.nav_favorites) {
             getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, FavoritesFragment.newInstance()).commit();
@@ -330,4 +356,11 @@ public class MainActivity extends AppCompatActivity
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
+
+    public void clearBackStack() {
+        FragmentUtils.sDisableFragmentAnimations = true;
+        getSupportFragmentManager().popBackStackImmediate(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+        FragmentUtils.sDisableFragmentAnimations = false;
+    }
+
 }

@@ -16,12 +16,14 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import eu.principalmedia.androidplayer.FragmentUtils;
 import eu.principalmedia.androidplayer.R;
 import eu.principalmedia.androidplayer.activity.MainActivity;
 import eu.principalmedia.androidplayer.entities.Album;
@@ -57,7 +59,6 @@ public class AlbumsFragment extends Fragment {
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-//        ((AppCompatActivity) activity).getSupportActionBar().setTitle(ALBUM_TITLE);
         ((TextView) (((MainActivity) getActivity()).mToolbar.findViewById(R.id.title_toolbar))).setText(ALBUM_TITLE);
         albumListener = (AlbumListener) activity;
     }
@@ -68,7 +69,7 @@ public class AlbumsFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_albums, container, false);
 
         mRecyclerView = (RecyclerView) view.findViewById(R.id.album_recycler_view);
-        mRecyclerView.setHasFixedSize(true);
+//        mRecyclerView.setHasFixedSize(true);
 
         mLayoutManager = new GridLayoutManager(getActivity(), 2);
         mRecyclerView.setLayoutManager(mLayoutManager);
@@ -90,6 +91,18 @@ public class AlbumsFragment extends Fragment {
         });
 
         return view;
+    }
+
+    @Override
+    public Animation onCreateAnimation(int transit, boolean enter, int nextAnim) {
+        if (FragmentUtils.sDisableFragmentAnimations) {
+//            return super.onCreateAnimation(0, enter, 0);
+
+            Animation animation = new Animation() {};
+            animation.setDuration(0);
+            return animation;
+        }
+        return super.onCreateAnimation(transit, enter, nextAnim);
     }
 
     public class ItemOffsetDecoration extends RecyclerView.ItemDecoration {
@@ -139,7 +152,6 @@ public class AlbumsFragment extends Fragment {
                     }
                 });
             }
-
         }
 
         @Override

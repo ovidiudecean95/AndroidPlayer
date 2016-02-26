@@ -4,22 +4,27 @@
     <group android:checkableBehavior="single">
         <item
             android:id="@+id/nav_tracks"
-            android:title="Tracks" />
+            android:title="Tracks"
+            android:icon="@drawable/tracks_nav"/>
         <item
             android:id="@+id/nav_albums"
-            android:title="Albums" />
+            android:title="Albums"
+            android:icon="@drawable/albums_nav"/>
         <item
             android:id="@+id/nav_artists"
-            android:title="Artists" />
-        <item
-            android:id="@+id/nav_genres"
-            android:title="Genres" />
+            android:title="Artists"
+            android:icon="@drawable/artists_nav"/>
+        <!--<item-->
+            <!--android:id="@+id/nav_genres"-->
+            <!--android:title="Genres" />-->
         <item
             android:id="@+id/nav_playlist"
-            android:title="Playlist" />
+            android:title="Playlist"
+            android:icon="@drawable/playlist_nav"/>
         <item
             android:id="@+id/nav_favorites"
-            android:title="Favorites" />
+            android:title="Favorites"
+            android:icon="@drawable/favorites_nav"/>
     </group>
 
     <item
